@@ -71,7 +71,7 @@ struct PatternTests {
     }
 
     @Test
-    func `capture node`() {
+    func `capturable node`() {
         #expect(Node(capture: "u").capture == "u")
         #expect(Node(capture: "u", label: "User").capture == "u")
         #expect(
@@ -101,6 +101,94 @@ struct PatternTests {
         )
         #expect(Node(capture: "u", object: User(id: "123")).capture == "u")
         #expect(Node(capturedObject: User(id: "123")).capture == "user123")
+    }
+
+    // MARK: - Path
+
+    @Test
+    func `path pattern`() {
+        #expect(
+            Path(
+                left: Node(capture: "a"),
+                Relationship(direction: .leftToRight, label: "CONTAINS"),
+                right: Node(capture: "b")
+            ).pattern == "(a)-[:CONTAINS]->(b)"
+        )
+        #expect(
+            Path(
+                left: Node(capture: "a"),
+                Relationship(direction: .none, label: "CONTAINS"),
+                right: Node(capture: "b")
+            ).pattern == "(a)-[:CONTAINS]-(b)"
+        )
+        #expect(
+            Path(
+                left: Node(capture: "a"),
+                Relationship(direction: .rightToLeft, label: "CONTAINS"),
+                right: Node(capture: "b")
+            ).pattern == "(a)<-[:CONTAINS]-(b)"
+        )
+        #expect(
+            Path(
+                left: Node(capture: "b"),
+                Relationship(direction: .leftToRight, label: "CONTAINS"),
+                right: Node(capture: "a")
+            ).pattern == "(b)-[:CONTAINS]->(a)"
+        )
+        #expect(
+            Path(
+                left: Node(capture: "b"),
+                Relationship(direction: .none, label: "CONTAINS"),
+                right: Node(capture: "a")
+            ).pattern == "(b)-[:CONTAINS]-(a)"
+        )
+        #expect(
+            Path(
+                left: Node(capture: "b"),
+                Relationship(direction: .rightToLeft, label: "CONTAINS"),
+                right: Node(capture: "a")
+            ).pattern == "(b)<-[:CONTAINS]-(a)"
+        )
+        #expect(
+            Path {
+                Node(capture: "a", label: "Alcohol")
+                Relationship(direction: .leftToRight, label: "MEMBER_OF")
+                Node(label: "Taxonomy", properties: ["id": 123])
+            }.pattern == "(a:Alcohol)-[:MEMBER_OF]->(:Taxonomy { id: 123 })"
+        )
+        #expect(
+            Path {
+                Node(label: "Taxonomy", properties: ["id": 123])
+                Relationship(direction: .rightToLeft, label: "MEMBER_OF")
+                Node(capture: "a", label: "Alcohol")
+                Relationship(direction: .rightToLeft, label: "OWNS")
+                Node(capture: "u", label: "User", properties: ["xid": "abc"])
+            }.pattern == "(:Taxonomy { id: 123 })<-[:MEMBER_OF]-(a:Alcohol)<-[:OWNS]-(u:User { xid: \"abc\" })"
+        )
+        #expect(
+            Path {
+                Node(label: "Taxonomy", properties: ["id": 123])
+                Relationship(direction: .rightToLeft, label: "MEMBER_OF")
+                Node(capture: "a", label: "Alcohol")
+                Relationship(direction: .rightToLeft, label: "OWNS")
+                Node(capture: "u1", label: "User", properties: ["xid": "abc"])
+                Relationship(direction: .leftToRight, label: "FOLLOWS")
+                Node(capture: "u2", label: "User", properties: ["xid": "def"])
+            }.pattern == "(:Taxonomy { id: 123 })<-[:MEMBER_OF]-(a:Alcohol)<-[:OWNS]-(u1:User { xid: \"abc\" })-[:FOLLOWS]->(u2:User { xid: \"def\" })"
+        )
+        #expect(
+            Path {
+                Node(label: "Taxonomy", properties: ["id": 123])
+                Relationship(direction: .rightToLeft, label: "MEMBER_OF")
+                Node(capture: "a", label: "Alcohol")
+                Relationship(direction: .rightToLeft, label: "OWNS")
+                Node(capture: "u1", label: "User", properties: ["xid": "abc"])
+                Relationship(direction: .leftToRight, label: "FOLLOWS")
+                Node(capture: "u2", label: "User", properties: ["xid": "def"])
+                Relationship(direction: .leftToRight, label: "AUTHORED")
+                Node(capture: "b", label: "Book", properties: ["xid": "ghi"])
+            }.pattern == "(:Taxonomy { id: 123 })<-[:MEMBER_OF]-(a:Alcohol)<-[:OWNS]-(u1:User { xid: \"abc\" })-[:FOLLOWS]->(u2:User { xid: \"def\" })-[:AUTHORED]->(b:Book { xid: \"ghi\" })"
+        )
     }
 
     // MARK: - Relationship
@@ -186,9 +274,9 @@ struct PatternTests {
                 }
             ).pattern == "<-[r:(!LIKES&!DISLIKES)]-"
         )
-        #expect(Relationship(direction: .leftToRight, depth: .any).pattern == "-[*]->")
-        #expect(Relationship(direction: .none, depth: .any).pattern == "-[*]-")
-        #expect(Relationship(direction: .rightToLeft, depth: .any).pattern == "<-[*]-")
+        #expect(Relationship(directionOfAnyDepth: .leftToRight).pattern == "-[*]->")
+        #expect(Relationship(directionOfAnyDepth: .none).pattern == "-[*]-")
+        #expect(Relationship(directionOfAnyDepth: .rightToLeft).pattern == "<-[*]-")
         #expect(Relationship(direction: .leftToRight, depth: 1).pattern == "-[*1]->")
         #expect(Relationship(direction: .none, depth: 1).pattern == "-[*1]-")
         #expect(Relationship(direction: .rightToLeft, depth: 1).pattern == "<-[*1]-")
@@ -201,9 +289,9 @@ struct PatternTests {
         #expect(Relationship(direction: .leftToRight, depth: 1..<23).pattern == "-[*1..23]->")
         #expect(Relationship(direction: .none, depth: 1..<23).pattern == "-[*1..23]-")
         #expect(Relationship(direction: .rightToLeft, depth: 1..<23).pattern == "<-[*1..23]-")
-        #expect(Relationship(direction: .leftToRight, capture: "r", depth: .any).pattern == "-[r*]->")
-        #expect(Relationship(direction: .none, capture: "r", depth: .any).pattern == "-[r*]-")
-        #expect(Relationship(direction: .rightToLeft, capture: "r", depth: .any).pattern == "<-[r*]-")
+        #expect(Relationship(directionOfAnyDepth: .leftToRight, capture: "r").pattern == "-[r*]->")
+        #expect(Relationship(directionOfAnyDepth: .none, capture: "r").pattern == "-[r*]-")
+        #expect(Relationship(directionOfAnyDepth: .rightToLeft, capture: "r").pattern == "<-[r*]-")
         #expect(Relationship(direction: .leftToRight, capture: "r", depth: 1).pattern == "-[r*1]->")
         #expect(Relationship(direction: .none, capture: "r", depth: 1).pattern == "-[r*1]-")
         #expect(Relationship(direction: .rightToLeft, capture: "r", depth: 1).pattern == "<-[r*1]-")
@@ -216,9 +304,9 @@ struct PatternTests {
         #expect(Relationship(direction: .leftToRight, capture: "r", depth: 1..<23).pattern == "-[r*1..23]->")
         #expect(Relationship(direction: .none, capture: "r", depth: 1..<23).pattern == "-[r*1..23]-")
         #expect(Relationship(direction: .rightToLeft, capture: "r", depth: 1..<23).pattern == "<-[r*1..23]-")
-        #expect(Relationship(direction: .leftToRight, label: "RECOMMENDS", depth: .any).pattern == "-[:RECOMMENDS*]->")
-        #expect(Relationship(direction: .none, label: "RECOMMENDS", depth: .any).pattern == "-[:RECOMMENDS*]-")
-        #expect(Relationship(direction: .rightToLeft, label: "RECOMMENDS", depth: .any).pattern == "<-[:RECOMMENDS*]-")
+        #expect(Relationship(directionOfAnyDepth: .leftToRight, label: "RECOMMENDS").pattern == "-[:RECOMMENDS*]->")
+        #expect(Relationship(directionOfAnyDepth: .none, label: "RECOMMENDS").pattern == "-[:RECOMMENDS*]-")
+        #expect(Relationship(directionOfAnyDepth: .rightToLeft, label: "RECOMMENDS").pattern == "<-[:RECOMMENDS*]-")
         #expect(Relationship(direction: .leftToRight, label: "RECOMMENDS", depth: 1).pattern == "-[:RECOMMENDS*1]->")
         #expect(Relationship(direction: .none, label: "RECOMMENDS", depth: 1).pattern == "-[:RECOMMENDS*1]-")
         #expect(Relationship(direction: .rightToLeft, label: "RECOMMENDS", depth: 1).pattern == "<-[:RECOMMENDS*1]-")
@@ -253,70 +341,36 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any
+                }
             ).pattern == "-[:(!LIKES&!DISLIKES)*]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).pattern == "-[:(!LIKES&!DISLIKES)*]-"
+                }
+            ).pattern == "-[:(!LIKES&!DISLIKES)*]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).pattern == "<-[:(!LIKES&!DISLIKES)*]-"
-        )
-        #expect(
-            Relationship(
-                direction: .leftToRight,
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).pattern == "-[:(!LIKES&!DISLIKES)*1]->"
-        )
-        #expect(
-            Relationship(
-                direction: .none,
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).pattern == "-[:(!LIKES&!DISLIKES)*1]-"
-        )
-        #expect(
-            Relationship(
-                direction: .rightToLeft,
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).pattern == "<-[:(!LIKES&!DISLIKES)*1]-"
+                }
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*]-"
         )
         #expect(
             Relationship(
@@ -327,7 +381,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).pattern == "-[:(!LIKES&!DISLIKES)*1..]->"
+                depth: 1
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1]->"
         )
         #expect(
             Relationship(
@@ -338,7 +393,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).pattern == "-[:(!LIKES&!DISLIKES)*1..]-"
+                depth: 1
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1]-"
         )
         #expect(
             Relationship(
@@ -349,7 +405,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).pattern == "<-[:(!LIKES&!DISLIKES)*1..]-"
+                depth: 1
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*1]-"
         )
         #expect(
             Relationship(
@@ -360,7 +417,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).pattern == "-[:(!LIKES&!DISLIKES)*..23]->"
+                depth: 1...
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1..]->"
         )
         #expect(
             Relationship(
@@ -371,7 +429,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).pattern == "-[:(!LIKES&!DISLIKES)*..23]-"
+                depth: 1...
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1..]-"
         )
         #expect(
             Relationship(
@@ -382,7 +441,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).pattern == "<-[:(!LIKES&!DISLIKES)*..23]-"
+                depth: 1...
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*1..]-"
         )
         #expect(
             Relationship(
@@ -393,7 +453,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).pattern == "-[:(!LIKES&!DISLIKES)*1..23]->"
+                depth: ..<23
+            ).pattern == "-[:(!LIKES&!DISLIKES)*..23]->"
         )
         #expect(
             Relationship(
@@ -404,7 +465,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).pattern == "-[:(!LIKES&!DISLIKES)*1..23]-"
+                depth: ..<23
+            ).pattern == "-[:(!LIKES&!DISLIKES)*..23]-"
         )
         #expect(
             Relationship(
@@ -415,30 +477,64 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).pattern == "<-[:(!LIKES&!DISLIKES)*1..23]-"
+                depth: ..<23
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*..23]-"
         )
         #expect(
             Relationship(
                 direction: .leftToRight,
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1..23]->"
+        )
+        #expect(
+            Relationship(
+                direction: .none,
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1..23]-"
+        )
+        #expect(
+            Relationship(
+                direction: .rightToLeft,
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*1..23]-"
+        )
+        #expect(
+            Relationship(
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
-                label: "RECOMMENDS",
-                depth: .any
+                label: "RECOMMENDS"
             ).pattern == "-[r:RECOMMENDS*]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
-                label: "RECOMMENDS",
-                depth: .any
+                label: "RECOMMENDS"
             ).pattern == "-[r:RECOMMENDS*]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
-                label: "RECOMMENDS",
-                depth: .any
+                label: "RECOMMENDS"
             ).pattern == "<-[r:RECOMMENDS*]-"
         )
         #expect(
@@ -534,75 +630,39 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).pattern == "-[r:(!LIKES&!DISLIKES)*]->"
+                }
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).pattern == "-[r:(!LIKES&!DISLIKES)*]-"
+                }
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).pattern == "<-[r:(!LIKES&!DISLIKES)*]-"
-        )
-        #expect(
-            Relationship(
-                direction: .leftToRight,
-                capture: "r",
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).pattern == "-[r:(!LIKES&!DISLIKES)*1]->"
-        )
-        #expect(
-            Relationship(
-                direction: .none,
-                capture: "r",
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).pattern == "-[r:(!LIKES&!DISLIKES)*1]-"
-        )
-        #expect(
-            Relationship(
-                direction: .rightToLeft,
-                capture: "r",
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).pattern == "<-[r:(!LIKES&!DISLIKES)*1]-"
+                }
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*]-"
         )
         #expect(
             Relationship(
@@ -614,7 +674,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).pattern == "-[r:(!LIKES&!DISLIKES)*1..]->"
+                depth: 1
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1]->"
         )
         #expect(
             Relationship(
@@ -626,7 +687,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).pattern == "-[r:(!LIKES&!DISLIKES)*1..]-"
+                depth: 1
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1]-"
         )
         #expect(
             Relationship(
@@ -638,7 +700,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).pattern == "<-[r:(!LIKES&!DISLIKES)*1..]-"
+                depth: 1
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*1]-"
         )
         #expect(
             Relationship(
@@ -650,7 +713,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).pattern == "-[r:(!LIKES&!DISLIKES)*..23]->"
+                depth: 1...
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1..]->"
         )
         #expect(
             Relationship(
@@ -662,7 +726,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).pattern == "-[r:(!LIKES&!DISLIKES)*..23]-"
+                depth: 1...
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1..]-"
         )
         #expect(
             Relationship(
@@ -674,7 +739,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).pattern == "<-[r:(!LIKES&!DISLIKES)*..23]-"
+                depth: 1...
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*1..]-"
         )
         #expect(
             Relationship(
@@ -686,7 +752,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).pattern == "-[r:(!LIKES&!DISLIKES)*1..23]->"
+                depth: ..<23
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*..23]->"
         )
         #expect(
             Relationship(
@@ -698,7 +765,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).pattern == "-[r:(!LIKES&!DISLIKES)*1..23]-"
+                depth: ..<23
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*..23]-"
         )
         #expect(
             Relationship(
@@ -710,7 +778,47 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).pattern == "<-[r:(!LIKES&!DISLIKES)*1..23]-"
+                depth: ..<23
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*..23]-"
+        )
+        #expect(
+            Relationship(
+                direction: .leftToRight,
+                capture: "r",
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1..23]->"
+        )
+        #expect(
+            Relationship(
+                direction: .none,
+                capture: "r",
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1..23]-"
+        )
+        #expect(
+            Relationship(
+                direction: .rightToLeft,
+                capture: "r",
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*1..23]-"
         )
         #expect(Relationship(direction: .leftToRight, properties: ["page": 116]).pattern == "-[ { page: 116 }]->")
         #expect(Relationship(direction: .none, properties: ["page": 116]).pattern == "-[ { page: 116 }]-")
@@ -762,7 +870,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES) { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES) { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -773,7 +882,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES) { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES) { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -784,7 +894,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                properties: ["page": 116]).pattern == "<-[:(!LIKES&!DISLIKES) { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[:(!LIKES&!DISLIKES) { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -820,7 +931,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES) { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES) { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -832,7 +944,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES) { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES) { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -844,20 +957,19 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                properties: ["page": 116]).pattern == "<-[r:(!LIKES&!DISLIKES) { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[r:(!LIKES&!DISLIKES) { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
-                depth: .any,
+                directionOfAnyDepth: .leftToRight,
                 properties: ["page": 116]
             ).pattern == "-[* { page: 116 }]->"
         )
-        #expect(Relationship(direction: .none, depth: .any, properties: ["page": 116]).pattern == "-[* { page: 116 }]-")
+        #expect(Relationship(directionOfAnyDepth: .none, properties: ["page": 116]).pattern == "-[* { page: 116 }]-")
         #expect(
             Relationship(
-                direction: .rightToLeft,
-                depth: .any,
+                directionOfAnyDepth: .rightToLeft,
                 properties: ["page": 116]
             ).pattern == "<-[* { page: 116 }]-"
         )
@@ -933,25 +1045,22 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "-[r* { page: 116 }]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "-[r* { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "<-[r* { page: 116 }]-"
         )
@@ -1053,25 +1162,22 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "-[:RECOMMENDS* { page: 116 }]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "-[:RECOMMENDS* { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "<-[:RECOMMENDS* { page: 116 }]-"
         )
@@ -1173,39 +1279,39 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)* { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)* { page: 116 }]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)* { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)* { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).pattern == "<-[:(!LIKES&!DISLIKES)* { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[:(!LIKES&!DISLIKES)* { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1217,7 +1323,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*1 { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1 { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1229,7 +1336,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1241,7 +1349,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).pattern == "<-[:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1253,7 +1362,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*1.. { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1.. { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1265,7 +1375,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1277,7 +1388,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).pattern == "<-[:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1289,7 +1401,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*..23 { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*..23 { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1301,7 +1414,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1313,7 +1427,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).pattern == "<-[:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1325,7 +1440,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*1..23 { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1..23 { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1337,7 +1453,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).pattern == "-[:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1349,32 +1466,30 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).pattern == "<-[:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "-[r:RECOMMENDS* { page: 116 }]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "-[r:RECOMMENDS* { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).pattern == "<-[r:RECOMMENDS* { page: 116 }]-"
         )
@@ -1488,7 +1603,7 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
                 labelBuilder: {
                     And {
@@ -1496,12 +1611,12 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)* { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)* { page: 116 }]->"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
                 labelBuilder: {
                     And {
@@ -1509,12 +1624,12 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)* { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)* { page: 116 }]-"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
                 labelBuilder: {
                     And {
@@ -1522,8 +1637,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).pattern == "<-[r:(!LIKES&!DISLIKES)* { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)* { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1536,7 +1651,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*1 { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1 { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1549,7 +1665,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1562,7 +1679,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).pattern == "<-[r:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*1 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1575,7 +1693,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*1.. { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1.. { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1588,7 +1707,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1601,7 +1721,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).pattern == "<-[r:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*1.. { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1614,7 +1735,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*..23 { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*..23 { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1627,7 +1749,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1640,7 +1763,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).pattern == "<-[r:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1653,7 +1777,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*1..23 { page: 116 }]->"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1..23 { page: 116 }]->"
         )
         #expect(
             Relationship(
@@ -1666,7 +1791,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).pattern == "-[r:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "-[r:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
         )
         #expect(
             Relationship(
@@ -1679,12 +1805,13 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).pattern == "<-[r:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
+                properties: ["page": 116]
+            ).pattern == "<-[r:(!LIKES&!DISLIKES)*1..23 { page: 116 }]-"
         )
     }
 
     @Test
-    func `capture relationship`() {
+    func `capturable relationship`() {
         #expect(Relationship(direction: .leftToRight, capture: "r").capture == "r")
         #expect(Relationship(direction: .none, capture: "r").capture == "r")
         #expect(Relationship(direction: .rightToLeft, capture: "r").capture == "r")
@@ -1727,9 +1854,9 @@ struct PatternTests {
                 }
             ).capture == "r"
         )
-        #expect(Relationship(direction: .leftToRight, capture: "r", depth: .any).capture == "r")
-        #expect(Relationship(direction: .none, capture: "r", depth: .any).capture == "r")
-        #expect(Relationship(direction: .rightToLeft, capture: "r", depth: .any).capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .leftToRight, capture: "r").capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .none, capture: "r").capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .rightToLeft, capture: "r").capture == "r")
         #expect(Relationship(direction: .leftToRight, capture: "r", depth: 1).capture == "r")
         #expect(Relationship(direction: .none, capture: "r", depth: 1).capture == "r")
         #expect(Relationship(direction: .rightToLeft, capture: "r", depth: 1).capture == "r")
@@ -1742,9 +1869,9 @@ struct PatternTests {
         #expect(Relationship(direction: .leftToRight, capture: "r", depth: 1..<23).capture == "r")
         #expect(Relationship(direction: .none, capture: "r", depth: 1..<23).capture == "r")
         #expect(Relationship(direction: .rightToLeft, capture: "r", depth: 1..<23).capture == "r")
-        #expect(Relationship(direction: .leftToRight, capture: "r", label: "RECOMMENDS", depth: .any).capture == "r")
-        #expect(Relationship(direction: .none, capture: "r", label: "RECOMMENDS", depth: .any).capture == "r")
-        #expect(Relationship(direction: .rightToLeft, capture: "r", label: "RECOMMENDS", depth: .any).capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .leftToRight, capture: "r", label: "RECOMMENDS").capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .none, capture: "r", label: "RECOMMENDS").capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .rightToLeft, capture: "r", label: "RECOMMENDS").capture == "r")
         #expect(Relationship(direction: .leftToRight, capture: "r", label: "RECOMMENDS", depth: 1).capture == "r")
         #expect(Relationship(direction: .none, capture: "r", label: "RECOMMENDS", depth: 1).capture == "r")
         #expect(Relationship(direction: .rightToLeft, capture: "r", label: "RECOMMENDS", depth: 1).capture == "r")
@@ -1759,75 +1886,39 @@ struct PatternTests {
         #expect(Relationship(direction: .rightToLeft, capture: "r", label: "RECOMMENDS", depth: 1..<23).capture == "r")
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).capture == "r"
+                }
+            ).capture == "r"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).capture == "r"
+                }
+            ).capture == "r"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
                 labelBuilder: {
                     And {
                         Not("LIKES")
                         Not("DISLIKES")
                     }
-                },
-                depth: .any).capture == "r"
-        )
-        #expect(
-            Relationship(
-                direction: .leftToRight,
-                capture: "r",
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).capture == "r"
-        )
-        #expect(
-            Relationship(
-                direction: .none,
-                capture: "r",
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).capture == "r"
-        )
-        #expect(
-            Relationship(
-                direction: .rightToLeft,
-                capture: "r",
-                labelBuilder: {
-                    And {
-                        Not("LIKES")
-                        Not("DISLIKES")
-                    }
-                },
-                depth: 1).capture == "r"
+                }
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1839,7 +1930,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).capture == "r"
+                depth: 1
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1851,7 +1943,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).capture == "r"
+                depth: 1
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1863,7 +1956,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1...).capture == "r"
+                depth: 1
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1875,7 +1969,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).capture == "r"
+                depth: 1...
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1887,7 +1982,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).capture == "r"
+                depth: 1...
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1899,7 +1995,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: ..<23).capture == "r"
+                depth: 1...
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1911,7 +2008,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).capture == "r"
+                depth: ..<23
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1923,7 +2021,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).capture == "r"
+                depth: ..<23
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -1935,7 +2034,47 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: 1..<23).capture == "r"
+                depth: ..<23
+            ).capture == "r"
+        )
+        #expect(
+            Relationship(
+                direction: .leftToRight,
+                capture: "r",
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).capture == "r"
+        )
+        #expect(
+            Relationship(
+                direction: .none,
+                capture: "r",
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).capture == "r"
+        )
+        #expect(
+            Relationship(
+                direction: .rightToLeft,
+                capture: "r",
+                labelBuilder: {
+                    And {
+                        Not("LIKES")
+                        Not("DISLIKES")
+                    }
+                },
+                depth: 1..<23
+            ).capture == "r"
         )
         #expect(Relationship(direction: .leftToRight, capture: "r", properties: ["page": 116]).capture == "r")
         #expect(Relationship(direction: .none, capture: "r", properties: ["page": 116]).capture == "r")
@@ -2000,13 +2139,9 @@ struct PatternTests {
                 },
                 properties: ["page": 116]).capture == "r"
         )
-        #expect(
-            Relationship(direction: .leftToRight, capture: "r", depth: .any, properties: ["page": 116]).capture == "r"
-        )
-        #expect(Relationship(direction: .none, capture: "r", depth: .any, properties: ["page": 116]).capture == "r")
-        #expect(
-            Relationship(direction: .rightToLeft, capture: "r", depth: .any, properties: ["page": 116]).capture == "r"
-        )
+        #expect(Relationship(directionOfAnyDepth: .leftToRight, capture: "r", properties: ["page": 116]).capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .none, capture: "r", properties: ["page": 116]).capture == "r")
+        #expect(Relationship(directionOfAnyDepth: .rightToLeft, capture: "r", properties: ["page": 116]).capture == "r")
         #expect(Relationship(direction: .leftToRight, capture: "r", depth: 1, properties: ["page": 116]).capture == "r")
         #expect(Relationship(direction: .none, capture: "r", depth: 1, properties: ["page": 116]).capture == "r")
         #expect(Relationship(direction: .rightToLeft, capture: "r", depth: 1, properties: ["page": 116]).capture == "r")
@@ -2033,28 +2168,25 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).capture == "r"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).capture == "r"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
                 label: "RECOMMENDS",
-                depth: .any,
                 properties: ["page": 116]
             ).capture == "r"
         )
@@ -2168,7 +2300,7 @@ struct PatternTests {
         )
         #expect(
             Relationship(
-                direction: .leftToRight,
+                directionOfAnyDepth: .leftToRight,
                 capture: "r",
                 labelBuilder: {
                     And {
@@ -2176,12 +2308,12 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
-                direction: .none,
+                directionOfAnyDepth: .none,
                 capture: "r",
                 labelBuilder: {
                     And {
@@ -2189,12 +2321,12 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
-                direction: .rightToLeft,
+                directionOfAnyDepth: .rightToLeft,
                 capture: "r",
                 labelBuilder: {
                     And {
@@ -2202,8 +2334,8 @@ struct PatternTests {
                         Not("DISLIKES")
                     }
                 },
-                depth: .any,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2216,7 +2348,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2229,7 +2362,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2242,7 +2376,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2255,7 +2390,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2268,7 +2404,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2281,7 +2418,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1...,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2294,7 +2432,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2307,7 +2446,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2320,7 +2460,8 @@ struct PatternTests {
                     }
                 },
                 depth: ..<23,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2333,7 +2474,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2346,7 +2488,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).capture == "r"
+                properties: ["page": 116]
+            ).capture == "r"
         )
         #expect(
             Relationship(
@@ -2359,95 +2502,8 @@ struct PatternTests {
                     }
                 },
                 depth: 1..<23,
-                properties: ["page": 116]).capture == "r"
-        )
-    }
-
-    // MARK: - Path
-
-    @Test
-    func `path pattern`() {
-        #expect(
-            Path(
-                left: Node(capture: "a"),
-                Relationship(direction: .leftToRight, label: "CONTAINS"),
-                right: Node(capture: "b")
-            ).pattern == "(a)-[:CONTAINS]->(b)"
-        )
-        #expect(
-            Path(
-                left: Node(capture: "a"),
-                Relationship(direction: .none, label: "CONTAINS"),
-                right: Node(capture: "b")
-            ).pattern == "(a)-[:CONTAINS]-(b)"
-        )
-        #expect(
-            Path(
-                left: Node(capture: "a"),
-                Relationship(direction: .rightToLeft, label: "CONTAINS"),
-                right: Node(capture: "b")
-            ).pattern == "(a)<-[:CONTAINS]-(b)"
-        )
-        #expect(
-            Path(
-                left: Node(capture: "b"),
-                Relationship(direction: .leftToRight, label: "CONTAINS"),
-                right: Node(capture: "a")
-            ).pattern == "(b)-[:CONTAINS]->(a)"
-        )
-        #expect(
-            Path(
-                left: Node(capture: "b"),
-                Relationship(direction: .none, label: "CONTAINS"),
-                right: Node(capture: "a")
-            ).pattern == "(b)-[:CONTAINS]-(a)"
-        )
-        #expect(
-            Path(
-                left: Node(capture: "b"),
-                Relationship(direction: .rightToLeft, label: "CONTAINS"),
-                right: Node(capture: "a")
-            ).pattern == "(b)<-[:CONTAINS]-(a)"
-        )
-        #expect(
-            Path {
-                Node(capture: "a", label: "Alcohol")
-                Relationship(direction: .leftToRight, label: "MEMBER_OF")
-                Node(label: "Taxonomy", properties: ["id": 123])
-            }.pattern == "(a:Alcohol)-[:MEMBER_OF]->(:Taxonomy { id: 123 })"
-        )
-        #expect(
-            Path {
-                Node(label: "Taxonomy", properties: ["id": 123])
-                Relationship(direction: .rightToLeft, label: "MEMBER_OF")
-                Node(capture: "a", label: "Alcohol")
-                Relationship(direction: .rightToLeft, label: "OWNS")
-                Node(capture: "u", label: "User", properties: ["xid": "abc"])
-            }.pattern == "(:Taxonomy { id: 123 })<-[:MEMBER_OF]-(a:Alcohol)<-[:OWNS]-(u:User { xid: \"abc\" })"
-        )
-        #expect(
-            Path {
-                Node(label: "Taxonomy", properties: ["id": 123])
-                Relationship(direction: .rightToLeft, label: "MEMBER_OF")
-                Node(capture: "a", label: "Alcohol")
-                Relationship(direction: .rightToLeft, label: "OWNS")
-                Node(capture: "u1", label: "User", properties: ["xid": "abc"])
-                Relationship(direction: .leftToRight, label: "FOLLOWS")
-                Node(capture: "u2", label: "User", properties: ["xid": "def"])
-            }.pattern == "(:Taxonomy { id: 123 })<-[:MEMBER_OF]-(a:Alcohol)<-[:OWNS]-(u1:User { xid: \"abc\" })-[:FOLLOWS]->(u2:User { xid: \"def\" })"
-        )
-        #expect(
-            Path {
-                Node(label: "Taxonomy", properties: ["id": 123])
-                Relationship(direction: .rightToLeft, label: "MEMBER_OF")
-                Node(capture: "a", label: "Alcohol")
-                Relationship(direction: .rightToLeft, label: "OWNS")
-                Node(capture: "u1", label: "User", properties: ["xid": "abc"])
-                Relationship(direction: .leftToRight, label: "FOLLOWS")
-                Node(capture: "u2", label: "User", properties: ["xid": "def"])
-                Relationship(direction: .leftToRight, label: "AUTHORED")
-                Node(capture: "b", label: "Book", properties: ["xid": "ghi"])
-            }.pattern == "(:Taxonomy { id: 123 })<-[:MEMBER_OF]-(a:Alcohol)<-[:OWNS]-(u1:User { xid: \"abc\" })-[:FOLLOWS]->(u2:User { xid: \"def\" })-[:AUTHORED]->(b:Book { xid: \"ghi\" })"
+                properties: ["page": 116]
+            ).capture == "r"
         )
     }
 }

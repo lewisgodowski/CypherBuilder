@@ -1,5 +1,5 @@
 //
-//  _Capturable.swift
+//  Capturable.swift
 //  
 //
 //  Created by Lewis Godowski on 4/12/26.

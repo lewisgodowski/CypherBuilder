@@ -8,75 +8,204 @@
 import Foundation
 
 public struct Relationship<C>: RelationshipPatternExpressible {
-    private let _capture: String
+    package let _capture: String
     public let pattern: String
 }
 
 extension Relationship where C == Never {
-    public init(direction: Direction) {
+    // MARK: - init
+
+    private init(_direction: Direction) {
         self._capture = ""
         self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
+            direction: _direction,
             capture: .none,
             label: .none,
             depth: .none,
             properties: [:]
         )
+    }
+
+    private init(_direction: Direction, _label: String) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .string(_label),
+            depth: .none,
+            properties: [:]
+        )
+    }
+
+    private init(_direction: Direction, @LabelExpressionBuilder _labelBuilder: () -> String) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .string(_labelBuilder()),
+            depth: .none,
+            properties: [:]
+        )
+    }
+
+    private init(_direction: Direction, _depth: any _DepthProviding) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .none,
+            depth: .providing(_depth),
+            properties: [:]
+        )
+    }
+
+    private init(_direction: Direction, _label: String, _depth: any _DepthProviding) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .string(_label),
+            depth: .providing(_depth),
+            properties: [:]
+        )
+    }
+
+    private init(
+        _direction: Direction,
+        @LabelExpressionBuilder _labelBuilder: () -> String,
+        _depth: any _DepthProviding
+    ) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .string(_labelBuilder()),
+            depth: .providing(_depth),
+            properties: [:]
+        )
+    }
+
+    private init(_direction: Direction, _depth: any _DepthProviding, _properties: [String: Any]) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .none,
+            depth: .providing(_depth),
+            properties: _properties
+        )
+    }
+
+    private init(_direction: Direction, _label: String, _depth: any _DepthProviding, _properties: [String: Any]) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .string(_label),
+            depth: .providing(_depth),
+            properties: _properties
+        )
+    }
+
+    private init(
+        _direction: Direction,
+        @LabelExpressionBuilder _labelBuilder: () -> String,
+        _depth: any _DepthProviding,
+        _properties: [String: Any]
+    ) {
+        self._capture = ""
+        self.pattern = _RelationshipFactory.makePattern(
+            direction: _direction,
+            capture: .none,
+            label: .string(_labelBuilder()),
+            depth: .providing(_depth),
+            properties: _properties
+        )
+    }
+
+    // MARK: - "convenience" init
+
+    public init(direction: Direction) {
+        self.init(_direction: direction)
     }
 
     public init(direction: Direction, label: String) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .string(label),
-            depth: .none,
-            properties: [:]
-        )
+        self.init(_direction: direction, _label: label)
     }
 
     public init(direction: Direction, @LabelExpressionBuilder labelBuilder: () -> String) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .string(labelBuilder()),
-            depth: .none,
-            properties: [:]
-        )
+        self.init(_direction: direction, _labelBuilder: labelBuilder)
     }
 
-    public init(direction: Direction, depth: any DepthProviding) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .none,
-            depth: .providing(depth),
-            properties: [:]
-        )
+    public init(directionOfAnyDepth direction: Direction) {
+        self.init(_direction: direction, _depth: AnyDepth())
     }
 
-    public init(direction: Direction, label: String, depth: any DepthProviding) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .string(label),
-            depth: .providing(depth),
-            properties: [:]
-        )
+    public init(direction: Direction, depth: Int) {
+        self.init(_direction: direction, _depth: depth)
     }
 
-    public init(direction: Direction, @LabelExpressionBuilder labelBuilder: () -> String, depth: any DepthProviding) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .string(labelBuilder()),
-            depth: .providing(depth),
-            properties: [:]
-        )
+    public init(direction: Direction, depth: PartialRangeFrom<Int>) {
+        self.init(_direction: direction, _depth: depth)
+    }
+
+    public init(direction: Direction, depth: PartialRangeUpTo<Int>) {
+        self.init(_direction: direction, _depth: depth)
+    }
+
+    public init(direction: Direction, depth: Range<Int>) {
+        self.init(_direction: direction, _depth: depth)
+    }
+
+    public init(directionOfAnyDepth direction: Direction, label: String) {
+        self.init(_direction: direction, _label: label, _depth: AnyDepth())
+    }
+
+    public init(direction: Direction, label: String, depth: Int) {
+        self.init(_direction: direction, _label: label, _depth: depth)
+    }
+
+    public init(direction: Direction, label: String, depth: PartialRangeFrom<Int>) {
+        self.init(_direction: direction, _label: label, _depth: depth)
+    }
+
+    public init(direction: Direction, label: String, depth: PartialRangeUpTo<Int>) {
+        self.init(_direction: direction, _label: label, _depth: depth)
+    }
+
+    public init(direction: Direction, label: String, depth: Range<Int>) {
+        self.init(_direction: direction, _label: label, _depth: depth)
+    }
+
+    public init(
+        directionOfAnyDepth direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: AnyDepth())
+    }
+
+    public init(direction: Direction, @LabelExpressionBuilder labelBuilder: () -> String, depth: Int) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth)
+    }
+
+    public init(
+        direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String,
+        depth: PartialRangeFrom<Int>
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth)
+    }
+
+    public init(
+        direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String,
+        depth: PartialRangeUpTo<Int>
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth)
+    }
+
+    public init(direction: Direction, @LabelExpressionBuilder labelBuilder: () -> String, depth: Range<Int>) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth)
     }
 
     public init(direction: Direction, properties: [String: Any]) {
@@ -112,218 +241,87 @@ extension Relationship where C == Never {
         )
     }
 
-    public init(direction: Direction, depth: any DepthProviding, properties: [String: Any]) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .none,
-            depth: .providing(depth),
-            properties: properties
-        )
+    public init(directionOfAnyDepth direction: Direction, properties: [String: Any]) {
+        self.init(_direction: direction, _depth: AnyDepth(), _properties: properties)
     }
 
-    public init(direction: Direction, label: String, depth: any DepthProviding, properties: [String: Any]) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .string(label),
-            depth: .providing(depth),
-            properties: properties
-        )
+    public init(direction: Direction, depth: Int, properties: [String: Any]) {
+        self.init(_direction: direction, _depth: depth, _properties: properties)
+    }
+
+    public init(direction: Direction, depth: PartialRangeFrom<Int>, properties: [String: Any]) {
+        self.init(_direction: direction, _depth: depth, _properties: properties)
+    }
+
+    public init(direction: Direction, depth: PartialRangeUpTo<Int>, properties: [String: Any]) {
+        self.init(_direction: direction, _depth: depth, _properties: properties)
+    }
+
+    public init(direction: Direction, depth: Range<Int>, properties: [String: Any]) {
+        self.init(_direction: direction, _depth: depth, _properties: properties)
+    }
+
+    public init(directionOfAnyDepth direction: Direction, label: String, properties: [String: Any]) {
+        self.init(_direction: direction, _label: label, _depth: AnyDepth(), _properties: properties)
+    }
+
+    public init(direction: Direction, label: String, depth: Int, properties: [String: Any]) {
+        self.init(_direction: direction, _label: label, _depth: depth, _properties: properties)
+    }
+
+    public init(direction: Direction, label: String, depth: PartialRangeFrom<Int>, properties: [String: Any]) {
+        self.init(_direction: direction, _label: label, _depth: depth, _properties: properties)
+    }
+
+    public init(direction: Direction, label: String, depth: PartialRangeUpTo<Int>, properties: [String: Any]) {
+        self.init(_direction: direction, _label: label, _depth: depth, _properties: properties)
+    }
+
+    public init(direction: Direction, label: String, depth: Range<Int>, properties: [String: Any]) {
+        self.init(_direction: direction, _label: label, _depth: depth, _properties: properties)
+    }
+
+    public init(
+        directionOfAnyDepth direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String,
+        properties: [String: Any]
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: AnyDepth(), _properties: properties)
     }
 
     public init(
         direction: Direction,
         @LabelExpressionBuilder labelBuilder: () -> String,
-        depth: any DepthProviding,
+        depth: Int,
         properties: [String: Any]
     ) {
-        self._capture = ""
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .none,
-            label: .string(labelBuilder()),
-            depth: .providing(depth),
-            properties: properties
-        )
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth, _properties: properties)
+    }
+
+    public init(
+        direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String,
+        depth: PartialRangeFrom<Int>,
+        properties: [String: Any]
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth, _properties: properties)
+    }
+
+    public init(
+        direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String,
+        depth: PartialRangeUpTo<Int>,
+        properties: [String: Any]
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth, _properties: properties)
+    }
+
+    public init(
+        direction: Direction,
+        @LabelExpressionBuilder labelBuilder: () -> String,
+        depth: Range<Int>,
+        properties: [String: Any]
+    ) {
+        self.init(_direction: direction, _labelBuilder: labelBuilder, _depth: depth, _properties: properties)
     }
 }
-
-// MARK: - Capturable
-
-extension Relationship: Capturable where C == String {
-    public var capture: String {
-        _capture
-    }
-
-    public init(direction: Direction, capture: String) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .none,
-            depth: .none,
-            properties: [:]
-        )
-    }
-
-    public init(direction: Direction, capture: String, label: String) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(label),
-            depth: .none,
-            properties: [:]
-        )
-    }
-
-    public init(direction: Direction, capture: String, @LabelExpressionBuilder labelBuilder: () -> String) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(labelBuilder()),
-            depth: .none,
-            properties: [:]
-        )
-    }
-
-    public init(direction: Direction, capture: String, depth: any DepthProviding) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .none,
-            depth: .providing(depth),
-            properties: [:]
-        )
-    }
-
-    public init(direction: Direction, capture: String, label: String, depth: any DepthProviding) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(label),
-            depth: .providing(depth),
-            properties: [:]
-        )
-    }
-
-    public init(
-        direction: Direction,
-        capture: String,
-        @LabelExpressionBuilder labelBuilder: () -> String,
-        depth: any DepthProviding
-    ) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(labelBuilder()),
-            depth: .providing(depth),
-            properties: [:]
-        )
-    }
-
-    public init(direction: Direction, capture: String, properties: [String: Any]) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .none,
-            depth: .none,
-            properties: properties
-        )
-    }
-
-    public init(direction: Direction, capture: String, label: String, properties: [String: Any]) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(label),
-            depth: .none,
-            properties: properties
-        )
-    }
-
-    public init(
-        direction: Direction,
-        capture: String,
-        @LabelExpressionBuilder labelBuilder: () -> String,
-        properties: [String: Any]
-    ) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(labelBuilder()),
-            depth: .none,
-            properties: properties
-        )
-    }
-
-    public init(direction: Direction, capture: String, depth: any DepthProviding, properties: [String: Any]) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .none,
-            depth: .providing(depth),
-            properties: properties
-        )
-    }
-
-    public init(
-        direction: Direction,
-        capture: String,
-        label: String,
-        depth: any DepthProviding,
-        properties: [String: Any]
-    ) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(label),
-            depth: .providing(depth),
-            properties: properties
-        )
-    }
-
-    public init(
-        direction: Direction,
-        capture: String,
-        @LabelExpressionBuilder labelBuilder: () -> String,
-        depth: any DepthProviding,
-        properties: [String: Any]
-    ) {
-        self._capture = capture
-        self.pattern = _RelationshipFactory.makePattern(
-            direction: direction,
-            capture: .string(capture),
-            label: .string(labelBuilder()),
-            depth: .providing(depth),
-            properties: properties
-        )
-    }
-}
-
-// MARK: - Internal
-
-private extension Relationship {
-    init(_pattern: String, capture: String) {
-        self._capture = capture
-        self.pattern = _pattern
-    }
-
-    init(_pattern: String) {
-        self._capture = ""
-        self.pattern = _pattern
-    }
-}
-

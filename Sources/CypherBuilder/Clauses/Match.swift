@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Match: Matchable, PatternExpressible {
+public struct Match: PatternExpressible {
     public let pattern: String
 
     public init(_ matchable: Matchable) {

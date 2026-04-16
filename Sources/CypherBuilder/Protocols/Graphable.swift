@@ -1,5 +1,5 @@
 //
-//  _Graphable.swift
+//  Graphable.swift
 //  
 //
 //  Created by Lewis Godowski on 4/12/26.

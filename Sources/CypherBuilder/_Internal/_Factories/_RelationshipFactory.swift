@@ -7,8 +7,8 @@
 
 import Foundation
 
-public struct _RelationshipFactory {
-    public static func makePattern(
+package struct _RelationshipFactory {
+    static package func makePattern(
         direction: Direction,
         capture: _Capture,
         label: _Label,
@@ -23,11 +23,11 @@ public struct _RelationshipFactory {
         let rightArrowString = direction.rightValue?.valueOrNil(shouldTrimWhitespaces: true)
 
         let leftBracketString = [captureString, labelString, depthString, propertiesString].allSatisfy { $0 == nil }
-        ? "-"
-        : "-["
+            ? "-"
+            : "-["
         let rightBracketString = [captureString, labelString, depthString, propertiesString].allSatisfy { $0 == nil }
-        ? "-"
-        : "]-"
+            ? "-"
+            : "]-"
 
         return [
             leftArrowString,

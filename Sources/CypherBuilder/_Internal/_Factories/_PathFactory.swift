@@ -7,8 +7,8 @@
 
 import Foundation
 
-public struct _PathFactory {
-    public static func makePattern(
+package struct _PathFactory {
+    static package func makePattern(
         origin: NodePatternExpressible,
         relationship: RelationshipPatternExpressible,
         destination: NodePatternExpressible

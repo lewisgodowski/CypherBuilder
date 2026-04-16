@@ -7,8 +7,8 @@
 
 import Foundation
 
-public struct _NodeFactory {
-    public static func makePattern(capture: _Capture, label: _Label, properties dict: [String: Any]) -> String {
+package struct _NodeFactory {
+    static package func makePattern(capture: _Capture, label: _Label, properties dict: [String: Any]) -> String {
         let captureString = capture.value?.valueOrNil(shouldTrimWhitespaces: true)
         let labelString = label.value?.valueOrNil(shouldTrimWhitespaces: true)
         let propertiesString = dict.propertiesString.valueOrNil(shouldTrimWhitespaces: true)
@@ -26,7 +26,7 @@ public struct _NodeFactory {
         ].compactMap({ $0 }).joined()
     }
 
-    public static func makePattern(capture: _Capture, object: any Graphable) -> String {
+    static package func makePattern(capture: _Capture, object: any Graphable) -> String {
         let dict: [String: Any] = if let data = try? JSONEncoder().encode(object),
                                      let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             dict

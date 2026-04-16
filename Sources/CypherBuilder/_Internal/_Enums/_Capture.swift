@@ -7,12 +7,12 @@
 
 import Foundation
 
-public enum _Capture {
+package enum _Capture {
     case string(String)
     case graphable(any Graphable)
     case none
 
-    public var value: String? {
+    package var value: String? {
         switch self {
         case .string(let value): value
         case .graphable(let object): object.capture

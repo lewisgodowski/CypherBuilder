@@ -7,9 +7,6 @@
 
 import Foundation
 
-public protocol NodePatternExpressible: PatternExpressible {}
-public protocol RelationshipPatternExpressible: PatternExpressible {}
-
 @resultBuilder
 public enum PathPatternBuilder {
     public static func buildBlock<

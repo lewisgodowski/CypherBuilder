@@ -7,11 +7,11 @@
 
 import Foundation
 
-public enum _Label {
+package enum _Label {
     case string(String)
     case none
 
-    public var value: String? {
+    package var value: String? {
         switch self {
         case .string(let value): if let v = value.valueOrNil(shouldTrimWhitespaces: true) { ":\(v)" } else { nil }
         case .none: nil

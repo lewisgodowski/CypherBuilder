@@ -8,117 +8,71 @@
 import Foundation
 
 public struct Node<C>: Createable, Matchable, NodePatternExpressible {
-    private let _capture: String
+    package let _capture: String
     public let pattern: String
 }
 
 extension Node where C == Never {
+    // MARK: - init
+
+    private init(_label: String) {
+        self._capture = ""
+        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_label), properties: [:])
+    }
+
+    private init(@LabelExpressionBuilder _labelBuilder: () -> String) {
+        self._capture = ""
+        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_labelBuilder()), properties: [:])
+    }
+
+    private init(_properties: [String: Any]) {
+        self._capture = ""
+        self.pattern = _NodeFactory.makePattern(capture: .none, label: .none, properties: _properties)
+    }
+
+    private init(_label: String, _properties: [String: Any]) {
+        self._capture = ""
+        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_label), properties: _properties)
+    }
+
+    private init(@LabelExpressionBuilder _labelBuilder: () -> String, _properties: [String: Any]) {
+        self._capture = ""
+        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_labelBuilder()), properties: _properties)
+    }
+
+    private init(_uncapturedObject _object: any Graphable) {
+        self._capture = ""
+        self.pattern = _NodeFactory.makePattern(capture: .none, object: _object)
+    }
+
+    // MARK: - "convenience" init
+
     public init() {
         self._capture = ""
         self.pattern = _NodeFactory.makePattern(capture: .none, label: .none, properties: [:])
     }
 
     public init(label: String) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(label), properties: [:])
+        self.init(_label: label)
     }
 
     public init(@LabelExpressionBuilder labelBuilder: () -> String) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(labelBuilder()), properties: [:])
+        self.init(_labelBuilder: labelBuilder)
     }
 
     public init(properties: [String: Any]) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .none, properties: properties)
+        self.init(_properties: properties)
     }
 
     public init(label: String, properties: [String: Any]) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(label), properties: properties)
+        self.init(_label: label, _properties: properties)
     }
 
     public init(@LabelExpressionBuilder labelBuilder: () -> String, properties: [String: Any]) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(labelBuilder()), properties: properties)
+        self.init(_labelBuilder: labelBuilder, _properties: properties)
     }
 
     public init(uncapturedObject object: any Graphable) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, object: object)
-    }
-}
-
-// MARK: - Capturable
-
-extension Node: Capturable where C == String {
-    public var capture: String {
-        _capture
-    }
-
-    public init(capture: String) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(capture), label: .none, properties: [:])
-    }
-
-    public init(capture: String, label: String) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(capture), label: .string(label), properties: [:])
-    }
-
-    public init(capture: String, @LabelExpressionBuilder labelBuilder: () -> String) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(
-            capture: .string(capture),
-            label: .string(labelBuilder()),
-            properties: [:]
-        )
-    }
-
-    public init(capture: String, properties: [String: Any]) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(capture), label: .none, properties: properties)
-    }
-
-    public init(capture: String, label: String, properties: [String: Any]) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(
-            capture: .string(capture),
-            label: .string(label),
-            properties: properties
-        )
-    }
-
-    public init(capture: String, @LabelExpressionBuilder labelBuilder: () -> String, properties: [String: Any]) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(
-            capture: .string(capture),
-            label: .string(labelBuilder()),
-            properties: properties
-        )
-    }
-
-    public init(capture: String, object: any Graphable) {
-        self._capture = capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(capture), object: object)
-    }
-
-    public init(capturedObject object: any Graphable) {
-        self._capture = object.capture
-        self.pattern = _NodeFactory.makePattern(capture: .graphable(object), object: object)
-    }
-}
-
-// MARK: - Internal
-
-private extension Node {
-    init(_pattern: String) {
-        self._capture = ""
-        self.pattern = _pattern
-    }
-
-    init(_pattern: String, capture: String) {
-        self._capture = capture
-        self.pattern = _pattern
+        self.init(_uncapturedObject: object)
     }
 }
