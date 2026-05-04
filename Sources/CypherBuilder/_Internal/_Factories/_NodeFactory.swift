@@ -1,6 +1,6 @@
 //
 //  _NodeFactory.swift
-//  
+//  CypherBuilder
 //
 //  Created by Lewis Godowski on 4/12/26.
 //
@@ -8,9 +8,9 @@
 import Foundation
 
 package struct _NodeFactory {
-    static package func makePattern(capture: _Capture, label: _Label, properties dict: [String: Any]) -> String {
+    static package func makePattern(capture: _Capture, labels: _Label, properties dict: [String: Any]) -> String {
         let captureString = capture.value?.valueOrNil(shouldTrimWhitespaces: true)
-        let labelString = label.value?.valueOrNil(shouldTrimWhitespaces: true)
+        let labelsString = labels.value?.valueOrNil(shouldTrimWhitespaces: true)
         let propertiesString = dict.propertiesString.valueOrNil(shouldTrimWhitespaces: true)
 
         return [
@@ -18,7 +18,7 @@ package struct _NodeFactory {
             [
                 [
                     captureString,
-                    labelString
+                    labelsString
                 ].compactMap({ $0 }).joined().valueOrNil(shouldTrimWhitespaces: true),
                 propertiesString
             ].compactMap({ $0 }).joined(separator: " "),
@@ -33,6 +33,6 @@ package struct _NodeFactory {
         } else {
             [:]
         }
-        return makePattern(capture: capture, label: .string(object.label), properties: dict)
+        return makePattern(capture: capture, labels: .string(object.label), properties: dict)
     }
 }

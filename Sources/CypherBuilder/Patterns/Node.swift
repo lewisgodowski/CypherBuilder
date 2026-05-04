@@ -1,6 +1,6 @@
 //
 //  Node.swift
-//  
+//  CypherBuilder
 //
 //  Created by Lewis Godowski on 3/25/26.
 //
@@ -15,29 +15,24 @@ public struct Node<C>: Createable, Matchable, NodePatternExpressible {
 extension Node where C == Never {
     // MARK: - init
 
-    private init(_label: String) {
+    private init(_labels: [String]) {
         self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_label), properties: [:])
+        self.pattern = _NodeFactory.makePattern(capture: .none, labels: .string(_labels), properties: [:])
     }
 
-    private init(@LabelExpressionBuilder _labelBuilder: () -> String) {
+    private init(@LabelExpressionBuilder _labelBuilder: () -> [String]) {
         self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_labelBuilder()), properties: [:])
+        self.pattern = _NodeFactory.makePattern(capture: .none, labels: .string(_labelBuilder()), properties: [:])
     }
 
-    private init(_properties: [String: Any]) {
+    private init(_labels: [String], _properties: [String: Any]) {
         self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .none, properties: _properties)
+        self.pattern = _NodeFactory.makePattern(capture: .none, labels: .string(_labels), properties: _properties)
     }
 
-    private init(_label: String, _properties: [String: Any]) {
+    private init(@LabelExpressionBuilder _labelBuilder: () -> [String], _properties: [String: Any]) {
         self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_label), properties: _properties)
-    }
-
-    private init(@LabelExpressionBuilder _labelBuilder: () -> String, _properties: [String: Any]) {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .string(_labelBuilder()), properties: _properties)
+        self.pattern = _NodeFactory.makePattern(capture: .none, labels: .string(_labelBuilder()), properties: _properties)
     }
 
     private init(_uncapturedObject _object: any Graphable) {
@@ -47,28 +42,19 @@ extension Node where C == Never {
 
     // MARK: - "convenience" init
 
-    public init() {
-        self._capture = ""
-        self.pattern = _NodeFactory.makePattern(capture: .none, label: .none, properties: [:])
+    public init(labels: String...) {
+        self.init(_labels: labels)
     }
 
-    public init(label: String) {
-        self.init(_label: label)
-    }
-
-    public init(@LabelExpressionBuilder labelBuilder: () -> String) {
+    public init(@LabelExpressionBuilder labelBuilder: () -> [String]) {
         self.init(_labelBuilder: labelBuilder)
     }
 
-    public init(properties: [String: Any]) {
-        self.init(_properties: properties)
+    public init(labels: String..., properties: [String: Any]) {
+        self.init(_labels: labels, _properties: properties)
     }
 
-    public init(label: String, properties: [String: Any]) {
-        self.init(_label: label, _properties: properties)
-    }
-
-    public init(@LabelExpressionBuilder labelBuilder: () -> String, properties: [String: Any]) {
+    public init(@LabelExpressionBuilder labelBuilder: () -> [String], properties: [String: Any]) {
         self.init(_labelBuilder: labelBuilder, _properties: properties)
     }
 

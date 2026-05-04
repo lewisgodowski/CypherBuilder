@@ -1,15 +1,18 @@
 //
 //  Path.swift
-//  
+//  CypherBuilder
 //
 //  Created by Lewis Godowski on 4/12/26.
 //
 
 import Foundation
 
-public struct Path: Createable, Matchable, PatternExpressible {
+public struct Path<V>: Createable, Matchable, PatternExpressible {
     public let pattern: String
+    package let _variable: String
+}
 
+extension Path where V == Never {
     // MARK: - init
 
     private init(
@@ -17,11 +20,18 @@ public struct Path: Createable, Matchable, PatternExpressible {
         _relationship: RelationshipPatternExpressible,
         _right: NodePatternExpressible
     ) {
-        self.pattern = _PathFactory.makePattern(origin: _left, relationship: _relationship, destination: _right)
+        self.pattern = _PathFactory.makePattern(
+            variable: nil,
+            origin: _left,
+            relationship: _relationship,
+            destination: _right
+        )
+        self._variable = ""
     }
 
     private init(@PathPatternBuilder _pathBuilder: () -> String) {
         self.pattern = _pathBuilder()
+        self._variable = ""
     }
 
     // MARK: - "convenience" init

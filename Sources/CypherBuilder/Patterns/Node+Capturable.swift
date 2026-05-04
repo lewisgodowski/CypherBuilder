@@ -1,6 +1,6 @@
 //
 //  Node+Capturable.swift
-//
+//  CypherBuilder
 //
 //  Created by Lewis Godowski on 4/15/26.
 //
@@ -14,44 +14,34 @@ extension Node: Capturable where C == String {
 
     // MARK: - init
 
-    private init(_capture: String) {
+    private init(_capture: String, _labels: [String]) {
         self._capture = _capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(_capture), label: .none, properties: [:])
+        self.pattern = _NodeFactory.makePattern(capture: .string(_capture), labels: .string(_labels), properties: [:])
     }
 
-    private init(_capture: String, _label: String) {
-        self._capture = _capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(_capture), label: .string(_label), properties: [:])
-    }
-
-    private init(_capture: String, @LabelExpressionBuilder _labelBuilder: () -> String) {
+    private init(_capture: String, @LabelExpressionBuilder _labelBuilder: () -> [String]) {
         self._capture = _capture
         self.pattern = _NodeFactory.makePattern(
             capture: .string(_capture),
-            label: .string(_labelBuilder()),
+            labels: .string(_labelBuilder()),
             properties: [:]
         )
     }
 
-    private init(_capture: String, _properties: [String: Any]) {
-        self._capture = _capture
-        self.pattern = _NodeFactory.makePattern(capture: .string(_capture), label: .none, properties: _properties)
-    }
-
-    private init(_capture: String, _label: String, _properties: [String: Any]) {
+    private init(_capture: String, _labels: [String], _properties: [String: Any]) {
         self._capture = _capture
         self.pattern = _NodeFactory.makePattern(
             capture: .string(_capture),
-            label: .string(_label),
+            labels: .string(_labels),
             properties: _properties
         )
     }
 
-    private init(_capture: String, @LabelExpressionBuilder _labelBuilder: () -> String, _properties: [String: Any]) {
+    private init(_capture: String, @LabelExpressionBuilder _labelBuilder: () -> [String], _properties: [String: Any]) {
         self._capture = _capture
         self.pattern = _NodeFactory.makePattern(
             capture: .string(_capture),
-            label: .string(_labelBuilder()),
+            labels: .string(_labelBuilder()),
             properties: _properties
         )
     }
@@ -69,27 +59,19 @@ extension Node: Capturable where C == String {
 
     // MARK: - "convenience" init
 
-    public init(capture: String) {
-        self.init(_capture: capture)
+    public init(capture: String, labels: String...) {
+        self.init(_capture: capture, _labels: labels)
     }
 
-    public init(capture: String, label: String) {
-        self.init(_capture: capture, _label: label)
-    }
-
-    public init(capture: String, @LabelExpressionBuilder labelBuilder: () -> String) {
+    public init(capture: String, @LabelExpressionBuilder labelBuilder: () -> [String]) {
         self.init(_capture: capture, _labelBuilder: labelBuilder)
     }
 
-    public init(capture: String, properties: [String: Any]) {
-        self.init(_capture: capture, _properties: properties)
+    public init(capture: String, labels: String..., properties: [String: Any]) {
+        self.init(_capture: capture, _labels: labels, _properties: properties)
     }
 
-    public init(capture: String, label: String, properties: [String: Any]) {
-        self.init(_capture: capture, _label: label, _properties: properties)
-    }
-
-    public init(capture: String, @LabelExpressionBuilder labelBuilder: () -> String, properties: [String: Any]) {
+    public init(capture: String, @LabelExpressionBuilder labelBuilder: () -> [String], properties: [String: Any]) {
         self.init(_capture: capture, _labelBuilder: labelBuilder, _properties: properties)
     }
 
